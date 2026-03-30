@@ -13,20 +13,22 @@ g = 9.8
 # simulation constants
 M1 = 7
 M2 = 8
-R1 = 25
+R1 = 65
 R2 = 35
 theta1 = np.deg2rad(100)
-theta2 = np.deg2rad(50)
+theta2 = np.deg2rad(110)
 theta1_dot = 0
 theta2_dot = 0
 
-time_stamps, dt = np.linspace(0, 300, 30000, retstep=True)
+time_stamps, dt = np.linspace(0, 100, 10000, retstep=True)
 
 # Visualization parameters
 X1 = []
 Y1 = []
 X2 = []
 Y2 = []
+TH1 = []
+TH2 = []
 # max_trail_length = 200
 
 for t in time_stamps:
@@ -36,6 +38,8 @@ for t in time_stamps:
     Y1.append(y1)
     X2.append(x1 + R2*np.sin(theta2))
     Y2.append(y1 - R2*np.cos(theta2))
+    TH1.append(theta1)
+    TH2.append(theta2)
 
     alpha = (M1 + M2)*R1**2
     beta = M2*R1*R2*np.cos(theta1 - theta2)
@@ -59,30 +63,48 @@ X1 = np.array(X1)
 Y1 = np.array(Y1)
 X2 = np.array(X2)
 Y2 = np.array(Y2)
+TH1 = np.array(TH1)
+TH2 = np.array(TH2)
 
 # visualization
-fig, ax = plt.subplots(figsize=(6,6))
+fig, (ax_pendulum, ax_theta) = plt.subplots(1, 2, gridspec_kw={'wspace':0.5, 'hspace':0})
 fig.set_facecolor('black')
-ax.set_facecolor('black')
+ax_pendulum.set_facecolor('black')
+ax_theta.set_facecolor('black')
 
 # axis parameters
 limit = R1 + R2 + 2
-ax.set_xlim(-limit, limit)
-ax.set_ylim(-limit*2, limit/2)
-ax.set_aspect('equal')
+ax_pendulum.set_xlim(-limit, limit)
+ax_pendulum.set_ylim(-limit, limit)
+ax_pendulum.set_aspect('equal')
 
-fixed_bar, = ax.plot([-limit/2, 0, limit/2], [0, 0, 0], '-o', linewidth=5, markersize=0, color='black')
-rod1, = ax.plot([0, X1[0]], [0, Y1[0]], '-o', linewidth=1, markersize=2, color='#292d2dd1')
-rod2, = ax.plot([X1[0], X2[0]], [Y1[0], Y2[2]], '-o', linewidth=1, markersize=2, zorder=1, color='#292d2dd1')
-bob1, = ax.plot([X1[0]], [Y1[0]], '.', markersize=((M1*60)/(M1+M2)), zorder=2, color='#292d2dd1')
-bob2, = ax.plot([X2[0]], [Y2[0]], '.', markersize=((M2*60)/(M1+M2)), color="#292d2dd1")
-trail1, = ax.plot([], [], '-o', linewidth=1, markersize=0, color="#a0ffa8", zorder=-1)
-trail2, = ax.plot([], [], '-o', linewidth=1, markersize=0, color="#bdfffd", zorder=-1)
-# trail = ax.scatter([X2[0]], [Y2[0]], marker='.', s=15, facecolor='#05fac1')
+# theta axis parameters
+theta_lim = max(np.abs(TH2)) + 5
+ax_theta.set_xlim(-theta_lim, theta_lim)
+ax_theta.set_ylim(-theta_lim, theta_lim)
+ax_theta.set_aspect('equal')
+ax_theta.tick_params(axis='x', color="#545c5cd1")
+ax_theta.tick_params(axis='y', color='#545c5cd1')
+ax_theta.tick_params(labelcolor='#545c5cd1')
+ax_theta.grid(True, color='#545c5cd1')
+ax_theta.set_xlabel("Theta_1", color='#545c5cd1')
+ax_theta.set_ylabel("Theta_2", color='#545c5cd1')
+
+fixed_bar, = ax_pendulum.plot([-limit/2, 0, limit/2], [0, 0, 0], '-o', linewidth=5, markersize=0, color='black')
+rod1, = ax_pendulum.plot([0, X1[0]], [0, Y1[0]], '-o', linewidth=1, markersize=2, color='#292d2dd1')
+rod2, = ax_pendulum.plot([X1[0], X2[0]], [Y1[0], Y2[2]], '-o', linewidth=1, markersize=2, zorder=1, color='#292d2dd1')
+bob1, = ax_pendulum.plot([X1[0]], [Y1[0]], '.', markersize=((M1*60)/(M1+M2)), zorder=2, color='#292d2dd1')
+bob2, = ax_pendulum.plot([X2[0]], [Y2[0]], '.', markersize=((M2*60)/(M1+M2)), color="#292d2dd1")
+trail1, = ax_pendulum.plot([], [], '-o', linewidth=1, markersize=0, color="#a0ffa8", zorder=-1)
+trail2, = ax_pendulum.plot([], [], '-o', linewidth=1, markersize=0, color="#bdfffd", zorder=-1)
+# trail = ax_pendulum.scatter([X2[0]], [Y2[0]], marker='.', s=15, facecolor='#05fac1')
 # trail_history_x = []
 # trail_history_y = []
 # all_alpha_values = list(np.linspace(0, 1, max_trail_length))
 # dynamic_alpha_values = []
+
+# theta1, theta2 plot
+thetas, = ax_theta.plot([], [], '-o', linewidth=2, markersize=0)
 
 # animation
 def update(frame):
@@ -105,7 +127,9 @@ def update(frame):
     # trail.set_offsets(np.c_[trail_history_x, trail_history_y])
     # trail.set_alpha(dynamic_alpha_values)
 
-    return rod1, bob1, rod2, bob2, trail1, trail2
+    thetas.set_data(TH1[:frame], TH2[:frame])
+
+    return rod1, bob1, rod2, bob2, trail1, trail2, thetas
 
 ani = animation.FuncAnimation(
     fig=fig,
